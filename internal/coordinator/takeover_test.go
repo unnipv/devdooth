@@ -58,9 +58,20 @@ func TestPauseDetachesControllerAndBlocksAttach(t *testing.T) {
 	if code, body := adminJSON(t, http.MethodPost, srv.URL+"/v1/leases/"+lease.LeaseID+"/resume", ""); code != http.StatusOK {
 		t.Fatalf("resume: %d %s", code, body)
 	}
-	conn2, _, err := websocket.DefaultDialer.Dial(lease.Endpoint, nil)
-	if err != nil {
-		t.Fatalf("reattach after resume: %v", err)
+	// Resume allows a fresh controller. The previous attach handler clears its
+	// state asynchronously, so retry briefly.
+	var conn2 *websocket.Conn
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		c, _, err := websocket.DefaultDialer.Dial(lease.Endpoint, nil)
+		if err == nil {
+			conn2 = c
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("reattach after resume: %v", err)
+		}
+		time.Sleep(50 * time.Millisecond)
 	}
 	defer conn2.Close()
 	if err := conn2.WriteMessage(websocket.TextMessage, []byte("after-resume")); err != nil {

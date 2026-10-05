@@ -1,6 +1,7 @@
 package coordinator_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -87,7 +88,8 @@ func TestSchedulingRoutesToMatchingNode(t *testing.T) {
 	}
 }
 
-// A node whose control connection goes away is no longer scheduled.
+// A node whose control connection goes away is no longer scheduled, and the
+// refusal is a scheduling conflict rather than a launch failure.
 func TestOfflineNodeIsNotScheduled(t *testing.T) {
 	srv := newBareServer(t)
 	fw := newFakeWorker(t, srv.URL, func(h *protocol.Hello) {
@@ -96,13 +98,49 @@ func TestOfflineNodeIsNotScheduled(t *testing.T) {
 	})
 	waitForNodes(t, srv.URL, 1)
 
+	// A healthy lease first, then release it so the slot is free again.
+	first := acquireLease(t, srv.URL, `{}`)
+	releaseLease(t, srv.URL, first.LeaseID)
+
 	fw.conn.Close()
+
+	// Wait until the coordinator knows the node is offline.
 	deadline := time.Now().Add(5 * time.Second)
-	for time.Now().Before(deadline) {
-		if _, code, _ := acquireLeaseRaw(t, srv.URL, `{}`); code != http.StatusOK {
-			return // correctly refused
-		}
-		time.Sleep(50 * time.Millisecond)
+	for time.Now().Before(deadline) && nodeOnline(t, srv.URL, "only-node") {
+		time.Sleep(20 * time.Millisecond)
 	}
-	t.Fatal("an offline node was still scheduled")
+	if nodeOnline(t, srv.URL, "only-node") {
+		t.Fatal("node was still reported online after its connection closed")
+	}
+
+	_, code, body := acquireLeaseRaw(t, srv.URL, `{}`)
+	if code != http.StatusConflict {
+		t.Fatalf("expected a 409 scheduling refusal, got %d: %s", code, body)
+	}
+}
+
+func nodeOnline(t *testing.T, base, name string) bool {
+	t.Helper()
+	req, _ := http.NewRequest(http.MethodGet, base+"/v1/nodes", nil)
+	req.Header.Set("Authorization", "Bearer admin-token")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	var out struct {
+		Nodes []struct {
+			Name   string `json:"name"`
+			Online bool   `json:"online"`
+		} `json:"nodes"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return false
+	}
+	for _, n := range out.Nodes {
+		if n.Name == name {
+			return n.Online
+		}
+	}
+	return false
 }

@@ -32,7 +32,8 @@ If any of these is false for you, do not run Devdooth that way. See
   and the browser's debug endpoint is bound to loopback on the worker.
 - **Admin and worker credentials are separate.** With durable identity enabled,
   the admin token is never accepted as a worker credential. Enrolled device
-  tokens are random 256-bit values, stored only as hashes.
+  tokens are random 256-bit values; the coordinator stores only a hash, and the
+  worker keeps its token in `<data-dir>/device.json` with `0600` permissions.
 - **Enrollment tokens are single-use and expire.** Redemption is atomic, so a
   replayed token fails. The device name is fixed at enrollment and cannot be
   changed on reconnect.
@@ -52,7 +53,7 @@ If any of these is false for you, do not run Devdooth that way. See
 | Threat | Mitigation | Residual risk |
 |---|---|---|
 | Stolen admin token | TLS; keep the token secret; rotate by restarting with a new `--admin-token` | Anyone with it can lease any browser |
-| Stolen device token | Stored hashed at rest; revoke the device | A leaked token impersonates that worker until revoked |
+| Stolen device token | Stored hashed on the coordinator; revoke the device | A leaked token, or a copy of the worker's `device.json`, impersonates that worker until revoked |
 | Stolen enrollment token | Single-use, short TTL | A leaked unused token can enroll one device |
 | Replayed enrollment | Atomic single-use redemption | None once used |
 | Unauthorized profile access | Profiles require an explicit request and are node-scoped; access is only via a valid lease | A lease can read whatever that profile is logged into |
@@ -60,7 +61,7 @@ If any of these is false for you, do not run Devdooth that way. See
 | SSRF / local network reach | Browsers reach what their network reaches | A CDP client can direct the browser at local-network services |
 | Debug port exposure | Bound to loopback; no inbound worker port | A local process on the worker can reach it |
 | Coordinator DoS | Bounded frames, write deadlines, capacity limits | Enough valid leases can exhaust a worker's slots |
-| Abandoned session | Worker-enforced TTL, idle cleanup | Cost is bounded by the TTL |
+| Abandoned session | Worker-enforced TTL and explicit release | Cost is bounded by the TTL |
 | Log leakage | No payload logging | Development and credential-recovery paths deliberately print a token once |
 
 ## What Devdooth does not defend against

@@ -84,13 +84,14 @@ Install once, enroll, and run the worker on each machine that should lend a
 browser. The worker needs no inbound port.
 
 ```bash
-# enroll (once): stores a device identity under ~/.devdooth
+# enroll (once) as the same user that will run the service, into its data dir
 devdooth join --coordinator https://devdooth.example.com \
-  --enroll-token "<token from the coordinator>" --name macbook
+  --enroll-token "<token from the coordinator>" --name macbook \
+  --data-dir /var/lib/devdooth-worker
 
 # run the worker
 devdooth worker --coordinator https://devdooth.example.com \
-  --profiles shopping,work
+  --data-dir /var/lib/devdooth-worker --profiles shopping,work
 ```
 
 - **Headful** machines (a desktop) add `--headful` so the browser is visible for
@@ -100,13 +101,17 @@ devdooth worker --coordinator https://devdooth.example.com \
 
 ### systemd unit
 
+Enroll with the same user and `--data-dir` the unit uses, so the service can
+find the device identity.
+
 ```ini
 [Unit]
 Description=Devdooth worker
 After=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/devdooth worker --coordinator https://devdooth.example.com --profiles shopping,work
+User=devdooth
+ExecStart=/usr/local/bin/devdooth worker --coordinator https://devdooth.example.com --data-dir /var/lib/devdooth-worker --profiles shopping,work
 Restart=always
 RestartSec=3
 

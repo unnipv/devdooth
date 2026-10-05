@@ -218,6 +218,7 @@ type relayWorker struct {
 	t     *testing.T
 	base  string
 	token string
+	name  string
 	conn  *websocket.Conn
 }
 
@@ -230,8 +231,12 @@ func (w *relayWorker) connect() {
 		w.t.Fatalf("worker dial: %v", err)
 	}
 	w.conn = conn
+	name := w.name
+	if name == "" {
+		name = "macbook"
+	}
 	if err := conn.WriteJSON(protocol.Hello{
-		Type: protocol.TypeHello, Name: "macbook", OS: "test", Arch: "test",
+		Type: protocol.TypeHello, Name: name, OS: "test", Arch: "test",
 		MaxSlots: 2, Browsers: []protocol.Browser{{Name: "chrome", Path: "/fake"}},
 		Generation: "gen-1",
 	}); err != nil {

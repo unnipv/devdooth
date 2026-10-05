@@ -9,45 +9,59 @@ import (
 )
 
 // Restarting the coordinator loses in-memory leases (they are invalidated), but
-// enrolled devices are durable and can reconnect with the same identity.
+// an enrolled device's identity is durable and it can reconnect with the same
+// token.
 func TestCoordinatorRestartInvalidatesLeases(t *testing.T) {
-	store, err := coordinator.OpenStore("")
+	dbPath := t.TempDir() + "/devdooth.db"
+
+	store1, err := coordinator.OpenStore(dbPath)
 	if err != nil {
 		t.Fatalf("open store: %v", err)
 	}
-	defer store.Close()
+	c1 := coordinator.New(coordinator.Options{AdminToken: "admin-token", Store: store1})
+	srv1 := httptest.NewServer(c1.Handler())
 
-	newCoordinator := func() *httptest.Server {
-		c := coordinator.New(coordinator.Options{
-			AdminToken: "admin-token", WorkerToken: "worker-token", Store: store,
-		})
-		srv := httptest.NewServer(c.Handler())
-		t.Cleanup(srv.Close)
-		return srv
+	device := enrollDevice(t, srv1.URL, "restart-node")
+
+	worker1 := &relayWorker{t: t, base: srv1.URL, token: device.DeviceToken, name: "restart-node"}
+	worker1.connect()
+	waitForNodes(t, srv1.URL, 1)
+
+	lease := acquireLease(t, srv1.URL, `{"node":"restart-node","ttl_seconds":120}`)
+	if lease.State != "ready" {
+		t.Fatalf("expected a ready lease, got %q", lease.State)
 	}
 
-	before := newCoordinator()
-	fw := newFakeWorker(t, before.URL)
-	defer fw.conn.Close()
-	waitForNodes(t, before.URL, 1)
-	lease := acquireLease(t, before.URL, `{"node":"fake","ttl_seconds":120}`)
+	// The coordinator and its worker connection both go away.
+	worker1.close()
+	srv1.Close()
+	if err := store1.Close(); err != nil {
+		t.Fatalf("close store: %v", err)
+	}
 
-	// The coordinator restarts: a fresh instance with the same store.
-	after := newCoordinator()
+	// It restarts against the same store. In-memory leases are gone.
+	store2, err := coordinator.OpenStore(dbPath)
+	if err != nil {
+		t.Fatalf("reopen store: %v", err)
+	}
+	t.Cleanup(func() { store2.Close() })
+	c2 := coordinator.New(coordinator.Options{AdminToken: "admin-token", Store: store2})
+	srv2 := httptest.NewServer(c2.Handler())
+	t.Cleanup(srv2.Close)
 
-	if code, _ := adminJSON(t, http.MethodGet, after.URL+"/v1/leases/"+lease.LeaseID, ""); code != http.StatusNotFound {
+	if code, _ := adminJSON(t, http.MethodGet, srv2.URL+"/v1/leases/"+lease.LeaseID, ""); code != http.StatusNotFound {
 		t.Fatalf("lease from before the restart should be unknown, got %d", code)
 	}
 
-	// A worker reconnects using its durable identity.
-	fw2 := newFakeWorker(t, after.URL)
-	defer fw2.conn.Close()
-	waitForNodes(t, after.URL, 1)
+	// The enrolled device reconnects with its durable token and can be leased.
+	worker2 := &relayWorker{t: t, base: srv2.URL, token: device.DeviceToken, name: "restart-node"}
+	worker2.connect()
+	defer worker2.close()
+	waitForNodes(t, srv2.URL, 1)
 
-	// And can still be leased.
-	fresh := acquireLease(t, after.URL, `{"node":"fake","ttl_seconds":60}`)
+	fresh := acquireLease(t, srv2.URL, `{"node":"restart-node","ttl_seconds":60}`)
 	if fresh.State != "ready" {
 		t.Fatalf("expected a ready lease after reconnect, got %q", fresh.State)
 	}
-	releaseLease(t, after.URL, fresh.LeaseID)
+	releaseLease(t, srv2.URL, fresh.LeaseID)
 }
