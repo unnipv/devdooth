@@ -15,27 +15,40 @@ threat model).
 ## Run it locally
 
 Prerequisites: Go 1.26+ (or a release binary from GitHub Releases) and an
-installed Chrome/Chromium. Node/npx is only needed for the MCP launcher.
+installed Chrome/Chromium. Node/npx is needed for the MCP launcher and for the
+`scripts/browse.mjs` helper.
 
 ```bash
 go build -o bin/devdooth ./cmd/devdooth
 
-# 1. Coordinator. It prints an admin token on first start; capture it.
-bin/devdooth coordinator --addr 127.0.0.1:8080 --store /tmp/devdooth.db > /tmp/devdooth-coordinator.log 2>&1 &
-ADMIN=$(grep -o 'DEVDOOTH_ADMIN_TOKEN=.*' /tmp/devdooth-coordinator.log | cut -d= -f2)   # or pass --admin-token yourself
+# 1. Coordinator. Pass a token so the snippet is deterministic (a generated one
+#    is only printed for a fresh store).
+ADMIN=$(openssl rand -hex 24)
+bin/devdooth coordinator --addr 127.0.0.1:8080 --store /tmp/devdooth.db --admin-token "$ADMIN" > /tmp/devdooth-coordinator.log 2>&1 &
+COORD_PID=$!
 
 # 2. Enroll this machine and run a worker on it.
 TOKEN=$(bin/devdooth enroll-token --url http://127.0.0.1:8080 --token "$ADMIN" --label local 2>/dev/null)
 bin/devdooth join --coordinator http://127.0.0.1:8080 --enroll-token "$TOKEN" --name local --data-dir /tmp/devdooth-worker
 bin/devdooth worker --coordinator http://127.0.0.1:8080 --data-dir /tmp/devdooth-worker --headful --profiles demo > /tmp/devdooth-worker.log 2>&1 &
+WORKER_PID=$!
 
 # 3. Lease a browser and verify it.
 bin/devdooth nodes --url http://127.0.0.1:8080 --token "$ADMIN"
 LEASE=$(bin/devdooth lease --url http://127.0.0.1:8080 --token "$ADMIN" --node local --ttl 600 2>/dev/null)
+LEASE_ID=$(echo "$LEASE" | sed -n 's/.*"lease_id": *"\([^"]*\)".*/\1/p')
 echo "$LEASE"    # contains "endpoint": a ws:// CDP URL
 
-# 4. Release when done.
-bin/devdooth release --url http://127.0.0.1:8080 --token "$ADMIN" --lease "$(echo "$LEASE" | grep -o '"lease_id": *"[^"]*"' | cut -d'"' -f4)"
+# 4. Drive and verify (Needs Node + the repo's playwright-core; drop --headful above to run headless).
+ENDPOINT=$(echo "$LEASE" | sed -n 's/.*"endpoint": *"\([^"]*\)".*/\1/p')
+node scripts/browse.mjs "$ENDPOINT" goto https://example.com
+node scripts/browse.mjs "$ENDPOINT" title      # -> Example Domain
+
+# 5. Release and stop everything you started.
+bin/devdooth release --url http://127.0.0.1:8080 --token "$ADMIN" --lease "$LEASE_ID"
+kill "$WORKER_PID" "$COORD_PID"
+pgrep -x devdooth || echo "stopped"
+rm -rf /tmp/devdooth.db /tmp/devdooth-worker /tmp/devdooth-coordinator.log /tmp/devdooth-worker.log
 ```
 
 Connect a client to the printed `endpoint` with
