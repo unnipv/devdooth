@@ -3,325 +3,415 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Devdooth — lease a real browser on hardware you already own</title>
+<title>Devdooth — Lease a real browser on hardware you already own</title>
 <meta name="description" content="Devdooth turns your Mac, Linux box, or Raspberry Pi into a browser pool for AI agents. Outbound-only workers, standard CDP endpoints, profiles stay on your machine.">
-<meta name="theme-color" content="#0a0d14">
-<meta property="og:title" content="Devdooth — lease a real browser on hardware you already own">
+<meta name="theme-color" content="#0b0e13">
+<meta property="og:title" content="Devdooth — Lease a real browser on hardware you already own">
 <meta property="og:description" content="Outbound-only workers, standard CDP endpoints, profiles stay on your machine.">
 <style>
+  /* ==========================================================================
+     Design tokens
+     ==========================================================================
+     Spacing scale — 4px base, 8px rhythm. Every margin, padding, and gap in
+     this document MUST be one of these tokens (or 0/auto). No raw values.
+
+       --s1   4px   hairline offsets inside small components
+       --s2   8px   tight gaps inside components (icon -> title)
+       --s3  12px   minimum inner padding of any boxed element
+       --s4  16px   default component gap/padding
+       --s5  24px   card padding, page gutter, gaps inside a group
+       --s6  32px   gap between sibling content blocks in a section
+       --s7  48px   section head -> first content block
+       --s8  64px   section padding (mobile), nav height
+       --s9  96px   section padding (desktop)
+
+     Vertical rhythm: sections pad 96px (desktop) / 64px (mobile) top and
+     bottom and are separated by a 1px hairline. Inside a section the head
+     sits 48px above the first content block (32px stack gap + 16px head
+     margin), sibling content blocks sit 32px apart, blocks inside a group
+     sit 24px apart. The same ladder repeats everywhere. */
   :root {
-    --bg: #0a0d14;
-    --panel: #10151f;
-    --panel-2: #161c29;
-    --border: #20293a;
-    --text: #e9edf6;
-    --muted: #9fa9c0;
-    --accent: #7c9cff;
-    --mint: #6ee7c7;
-    --warn: #ff9d9d;
-    --radius: 14px;
-    --maxw: 1100px;
-    --nav-h: 64px;
+    --s1: 0.25rem;
+    --s2: 0.5rem;
+    --s3: 0.75rem;
+    --s4: 1rem;
+    --s5: 1.5rem;
+    --s6: 2rem;
+    --s7: 3rem;
+    --s8: 4rem;
+    --s9: 6rem;
+
+    /* Layout */
+    --nav-h: var(--s8);
+    --maxw: 66rem;
+    --gutter: var(--s5);
+
+    /* Type scale — 16px base, ~1.25 ratio */
+    --fs-micro: 0.75rem;    /* 12px overlines, table heads      */
+    --fs-small: 0.875rem;   /* 14px secondary text, captions    */
+    --fs-body:  1rem;       /* 16px body                        */
+    --fs-lede:  1.125rem;   /* 18px section intros, hero para   */
+    --fs-h3:    1.25rem;    /* 20px sub-group headings          */
+    --fs-h2: clamp(1.625rem, 1.325rem + 1.5vw, 2.25rem);
+    --fs-h1: clamp(2.25rem, 1.75rem + 2.5vw, 3.25rem);
+    --fs-code:  0.8125rem;  /* 13px code                        */
+
+    /* Palette — restrained dark, one accent */
+    --bg:          #0b0e13;
+    --surface:     #10141b;
+    --surface-2:   #161b24;
+    --line:        #1f2632;
+    --line-strong: #2c3547;
+    --text:        #e8ebf2;
+    --muted:       #a4adbb;
+    --accent:      #7c8cff;
+    --accent-ink:  #0b0e13;
+    --accent-soft: rgba(124, 140, 255, 0.12);
+    --ok:          #6fcf97;
+    --warn:        #e5787a;
+
+    /* Radii (4px rhythm) */
+    --r-sm: 0.25rem;
+    --r-md: 0.5rem;
+    --r-lg: 0.75rem;
+    --r-xl: 1rem;
   }
-  * { box-sizing: border-box; }
-  html {
-    scroll-behavior: smooth;
-    scroll-padding-top: calc(var(--nav-h) + 20px);
-  }
+
+  /* ==========================================================================
+     Base
+     ====================================================================== */
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", system-ui, sans-serif;
+    font: var(--fs-body)/1.6 system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
-    overflow-x: clip;
+    text-rendering: optimizeLegibility;
   }
+  h1, h2, h3, p, figure, ul, pre { margin: 0; }
+  ul { padding: 0; list-style: none; }
   img { max-width: 100%; height: auto; }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
-  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--r-sm);
+  }
+  .container {
+    max-width: var(--maxw);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
   .sr-only {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
   }
-  .skip {
-    position: absolute; left: 14px; top: -60px; z-index: 300;
-    background: var(--accent); color: #0a0d14; font-weight: 650; font-size: 14px;
-    padding: 9px 16px; border-radius: 9px; transition: top .15s ease;
+  .skip-link {
+    position: absolute; left: var(--s4); top: -100%; z-index: 200;
+    background: var(--accent); color: var(--accent-ink);
+    font-weight: 600; font-size: var(--fs-small);
+    padding: var(--s2) var(--s4); border-radius: var(--r-md);
   }
-  .skip:focus-visible { top: 12px; text-decoration: none; }
+  .skip-link:focus-visible { top: var(--s3); text-decoration: none; }
 
-  /* ---------- Nav: solid and opaque, always above scrolling content ---------- */
-  .site-nav {
+  /* ==========================================================================
+     Nav — sticky, fully opaque, above all scrolling content
+     ====================================================================== */
+  .nav {
     position: sticky; top: 0; z-index: 100;
-    background: #0c1018; /* fully opaque: no blur, no bleed-through */
-    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
   }
-  .nav-inner { display: flex; align-items: center; gap: 18px; height: var(--nav-h); }
+  .nav-row { display: flex; align-items: center; gap: var(--s4); height: var(--nav-h); }
   .brand {
-    display: flex; align-items: center; gap: 10px; flex: none;
-    font-weight: 700; font-size: 16.5px; letter-spacing: -.01em;
+    display: flex; align-items: center; gap: var(--s3); flex: none;
+    font-weight: 600; font-size: var(--fs-body); letter-spacing: -0.01em;
   }
-  .brand-mark {
-    width: 22px; height: 22px; border-radius: 7px;
-    background: linear-gradient(135deg, var(--accent), var(--mint));
-    box-shadow: 0 0 16px rgba(124, 156, 255, .35);
-  }
+  .brand-mark { width: 1.25rem; height: 1.25rem; display: block; }
   .nav-links {
-    display: flex; align-items: center; gap: 2px; margin-left: auto;
-    padding: 6px 2px; overflow-x: auto;
-    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    display: flex; align-items: center; gap: var(--s1);
+    margin-left: auto; min-width: 0;
+    overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
   }
   .nav-links::-webkit-scrollbar { display: none; }
   .nav-links a {
-    color: var(--muted); font-size: 14px; white-space: nowrap;
-    padding: 7px 10px; border-radius: 8px;
+    color: var(--muted); font-size: var(--fs-small); white-space: nowrap;
+    padding: var(--s2) var(--s3); border-radius: var(--r-md);
   }
-  .nav-links a:hover { color: var(--text); text-decoration: none; background: rgba(255, 255, 255, .045); }
-  .nav-links .gh {
-    color: var(--text); font-weight: 600; margin-left: 8px;
-    border: 1px solid var(--border);
+  .nav-links a:hover { color: var(--text); background: var(--surface-2); text-decoration: none; }
+  .nav-links a.gh {
+    color: var(--text); font-weight: 600;
+    border: 1px solid var(--line-strong); margin-left: var(--s2);
   }
-  .nav-links .gh:hover { border-color: #364159; background: var(--panel); }
+  .nav-links a.gh:hover { background: var(--surface); border-color: var(--muted); }
 
-  /* ---------- Hero ---------- */
-  .hero { position: relative; padding: 92px 0 76px; }
+  /* ==========================================================================
+     Sections and the vertical rhythm
+     ====================================================================== */
+  main > section { padding-block: var(--s9); }
+  main > section + section { border-top: 1px solid var(--line); }
+  section[id] { scroll-margin-top: calc(var(--nav-h) + var(--s5)); }
+
+  /* Stack primitives: components carry no outer margins; spacing comes
+     from the stack gaps so the rhythm cannot drift. */
+  .stack-section { display: grid; gap: var(--s6); }
+  .stack-group   { display: grid; gap: var(--s5); }
+
+  .section-head { max-width: 46rem; margin-block-end: var(--s4); } /* 32 + 16 = 48px to first block */
+  .kicker {
+    margin-block-end: var(--s3);
+    font-size: var(--fs-micro); font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .section-head h1, .section-head h2 { letter-spacing: -0.025em; }
+  .section-head h1 { font-size: var(--fs-h1); line-height: 1.08; margin-block-end: var(--s4); }
+  .section-head h2 { font-size: var(--fs-h2); line-height: 1.15; margin-block-end: var(--s4); }
+  .lede { font-size: var(--fs-lede); line-height: 1.6; color: var(--muted); max-width: 44rem; }
+
+  .group-head h3 { font-size: var(--fs-h3); line-height: 1.3; letter-spacing: -0.01em; margin-block-end: var(--s2); }
+  .group-head p { color: var(--muted); }
+
+  .note { color: var(--muted); font-size: var(--fs-small); max-width: 46rem; }
+
+  /* ==========================================================================
+     Hero
+     ====================================================================== */
+  .hero { position: relative; }
   .hero::before {
     content: ""; position: absolute; inset: 0; pointer-events: none;
-    background:
-      radial-gradient(760px 400px at 16% -10%, rgba(124, 156, 255, .15), transparent 60%),
-      radial-gradient(560px 340px at 90% -6%, rgba(110, 231, 199, .09), transparent 55%);
+    background: radial-gradient(48rem 24rem at 12% 0%, rgba(124, 140, 255, 0.08), transparent 65%);
   }
-  .hero .wrap { position: relative; }
-  .tag {
-    display: inline-block; font-size: 12.5px; font-weight: 600;
-    letter-spacing: .09em; text-transform: uppercase; color: var(--mint);
-    border: 1px solid rgba(110, 231, 199, .28); border-radius: 999px;
-    padding: 6px 14px; margin: 0 0 26px; background: rgba(110, 231, 199, .06);
-  }
-  h1 {
-    font-size: clamp(2.35rem, 5.6vw, 3.9rem); line-height: 1.05;
-    letter-spacing: -.032em; margin: 0 0 22px; max-width: 15em;
-  }
-  .grad {
-    background: linear-gradient(115deg, var(--accent) 10%, var(--mint) 90%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .lead {
-    font-size: clamp(1.06rem, 2vw, 1.25rem); line-height: 1.6;
-    color: var(--muted); max-width: 700px; margin: 0 0 34px;
-  }
-  .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 48px; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px; border-radius: 10px;
-    padding: 12px 20px; font-weight: 650; font-size: 15px;
-    border: 1px solid var(--border); color: var(--text); background: var(--panel);
-    transition: border-color .15s ease, transform .15s ease, background .15s ease;
-  }
-  .btn:hover { text-decoration: none; border-color: #36415a; transform: translateY(-1px); }
-  .btn.primary {
-    background: linear-gradient(135deg, var(--accent), #5f82ff);
-    border-color: transparent; color: #081124;
-  }
-  .btn.primary:hover { filter: brightness(1.07); }
+  .hero .container { position: relative; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: var(--s3); }
+  .hero .codeblock { max-width: 44rem; }
 
-  /* ---------- Code blocks ---------- */
-  pre {
-    margin: 0; background: #0b0f17; border: 1px solid var(--border);
-    border-radius: 12px; padding: 17px 18px; overflow-x: auto;
-    font-size: 13.5px; line-height: 1.65; color: #d7def0;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* ==========================================================================
+     Buttons
+     ====================================================================== */
+  .btn {
+    display: inline-flex; align-items: center; gap: var(--s2);
+    padding: var(--s3) var(--s5); border-radius: var(--r-md);
+    border: 1px solid var(--line-strong); background: var(--surface);
+    color: var(--text); font-weight: 600; font-size: var(--fs-small);
+    transition: border-color 0.15s ease, background 0.15s ease;
   }
-  pre .c { color: #6d7890; }
-  pre .k { color: var(--mint); }
-  pre .s { color: #e6c07b; }
+  .btn:hover { text-decoration: none; border-color: var(--muted); background: var(--surface-2); }
+  .btn-primary { background: var(--accent); border-color: transparent; color: var(--accent-ink); }
+  .btn-primary:hover { background: #8f9dff; border-color: transparent; color: var(--accent-ink); }
+
+  /* ==========================================================================
+     Code blocks — honest, bordered, with a labelled header row
+     ====================================================================== */
+  .codeblock {
+    border: 1px solid var(--line); border-radius: var(--r-xl);
+    background: #0d1119; overflow: hidden;
+  }
+  .codeblock-head {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--s4);
+    padding: var(--s3) var(--s4);
+    background: var(--surface); border-bottom: 1px solid var(--line);
+  }
+  .codeblock-label {
+    font-size: var(--fs-micro); font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  }
+  .codeblock pre {
+    padding: var(--s4); overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: var(--fs-code); line-height: 1.7; color: #d5dcec;
+  }
+  .codeblock pre:focus-visible { outline-offset: -2px; }
+  pre .c { color: #68707f; }
+  pre .k { color: var(--accent); }
+  pre .s { color: #8fd3a8; }
   code.inline {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
-    padding: 1px 6px; font-size: 13.5px; color: #dbe2f5;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.875em; color: var(--text);
+    background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: var(--r-sm); padding: 0 var(--s1);
     overflow-wrap: anywhere;
   }
-  .code-block { position: relative; margin: 14px 0; }
-  .code-block > .copy { position: absolute; top: 10px; right: 10px; }
-  .copy {
-    font: inherit; font-size: 12.5px; font-weight: 600;
-    padding: 6px 12px; border-radius: 8px; cursor: pointer;
-    border: 1px solid var(--border); background: var(--panel-2); color: var(--muted);
-    transition: color .15s ease, border-color .15s ease;
+  .copy-btn {
+    font: inherit; font-size: var(--fs-small); font-weight: 600;
+    color: var(--muted); background: transparent;
+    border: 1px solid var(--line-strong); border-radius: var(--r-md);
+    padding: var(--s3) var(--s4); cursor: pointer; flex: none;
+    transition: color 0.15s ease, border-color 0.15s ease;
   }
-  .copy:hover { color: var(--text); border-color: #36415a; }
+  .copy-btn:hover { color: var(--text); border-color: var(--muted); }
 
-  /* Terminal-style hero block */
-  .terminal {
-    max-width: 800px; border: 1px solid var(--border); border-radius: var(--radius);
-    background: #0b0f17; box-shadow: 0 30px 70px -30px rgba(0, 0, 0, .65);
-  }
-  .terminal-bar {
-    display: flex; align-items: center; gap: 7px;
-    padding: 11px 14px; border-bottom: 1px solid var(--border);
-  }
-  .terminal-bar .td { width: 11px; height: 11px; border-radius: 50%; flex: none; }
-  .terminal-bar .td:nth-of-type(1) { background: #ff5f57; }
-  .terminal-bar .td:nth-of-type(2) { background: #febc2e; }
-  .terminal-bar .td:nth-of-type(3) { background: #28c840; }
-  .terminal-bar .term-label { margin-left: 6px; font-size: 12.5px; color: var(--muted); }
-  .terminal-bar .copy { margin-left: auto; }
-  .terminal pre { border: 0; border-radius: 0 0 var(--radius) var(--radius); background: transparent; }
-
-  /* ---------- Sections ---------- */
-  section { padding: 76px 0; border-top: 1px solid var(--border); }
-  main section:first-of-type { border-top: 0; padding-top: 30px; }
-  section[id] { scroll-margin-top: calc(var(--nav-h) + 20px); }
-  h2 { font-size: clamp(1.7rem, 3.4vw, 2.3rem); letter-spacing: -.025em; line-height: 1.15; margin: 0 0 14px; }
-  h2 + .sub { margin-top: 0; }
-  .sub { color: var(--muted); max-width: 720px; margin: 0 0 30px; font-size: 1.06rem; }
-  p.sub + .sub { margin-top: -14px; }
-  h3.step {
-    display: flex; align-items: center; gap: 11px;
-    font-size: 1.08rem; letter-spacing: -.01em; margin: 38px 0 6px;
-  }
-  h3.step .num {
-    display: inline-flex; align-items: center; justify-content: center; flex: none;
-    width: 27px; height: 27px; border-radius: 9px; font-size: 13.5px; font-weight: 700;
-    color: var(--accent); background: rgba(124, 156, 255, .11);
-    border: 1px solid rgba(124, 156, 255, .28);
-  }
-  h3.kicker {
-    font-size: 13px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .09em; color: var(--accent); margin: 44px 0 10px;
-  }
-  .note { color: var(--muted); font-size: .95rem; margin: 16px 0 0; max-width: 760px; }
-
-  /* ---------- Cards ---------- */
-  .features {
-    display: grid; gap: 16px; margin-top: 34px;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  }
+  /* ==========================================================================
+     Cards
+     ====================================================================== */
+  .card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s4); }
   .card {
-    background: linear-gradient(180deg, var(--panel), var(--panel-2));
-    border: 1px solid var(--border); border-radius: var(--radius); padding: 22px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-xl); padding: var(--s5);
+    transition: border-color 0.15s ease;
   }
-  .card h3 { margin: 0 0 8px; font-size: 1rem; letter-spacing: -.01em; }
-  .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
-  .ico {
+  .card:hover { border-color: var(--line-strong); }
+  .card h3 { font-size: var(--fs-body); font-weight: 600; letter-spacing: -0.01em; margin-block-end: var(--s2); }
+  .card p { color: var(--muted); font-size: var(--fs-small); line-height: 1.6; }
+  .card-icon {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 40px; height: 40px; border-radius: 11px; margin-bottom: 14px;
-    font-size: 19px; background: rgba(124, 156, 255, .1);
-    border: 1px solid rgba(124, 156, 255, .18);
+    width: 2.5rem; height: 2.5rem; border-radius: var(--r-lg);
+    background: var(--accent-soft); color: var(--accent);
+    margin-block-end: var(--s4);
   }
+  .card-icon svg { width: 1.25rem; height: 1.25rem; }
 
-  /* ---------- Flow diagram ---------- */
-  .diagram {
-    display: grid; align-items: stretch; gap: 12px; margin-top: 34px;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.25fr) auto minmax(0, 1fr);
+  /* ==========================================================================
+     Flow diagram (How it works)
+     ====================================================================== */
+  .flow {
+    display: grid; align-items: stretch; gap: var(--s4);
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
   }
-  .node {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-    padding: 18px; font-size: 13.5px; color: var(--muted); min-width: 0;
+  .flow-node {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-xl); padding: var(--s5);
   }
-  .node strong { display: block; color: var(--text); font-size: 15px; margin: 8px 0 4px; }
-  .node-num {
+  .flow-node h3 { font-size: var(--fs-body); font-weight: 600; margin-block: var(--s3) var(--s2); }
+  .flow-node p { color: var(--muted); font-size: var(--fs-small); }
+  .flow-num {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 24px; height: 24px; border-radius: 8px; font-size: 12.5px; font-weight: 700;
-    color: var(--mint); background: rgba(110, 231, 199, .09);
-    border: 1px solid rgba(110, 231, 199, .25);
+    width: 1.75rem; height: 1.75rem; border-radius: var(--r-md);
+    background: var(--accent-soft); color: var(--accent);
+    font-size: var(--fs-small); font-weight: 700;
   }
-  .arrow {
-    align-self: center; color: var(--accent); font-size: 22px; line-height: 1;
-    padding: 0 2px; text-align: center;
-  }
-  @media (max-width: 840px) {
-    .diagram { grid-template-columns: minmax(0, 1fr); }
-    .arrow { transform: rotate(90deg); padding: 2px 0; }
-  }
+  .flow-arrow { align-self: center; color: var(--accent); display: flex; }
+  .flow-arrow svg { width: 1.5rem; height: 1.5rem; }
 
+  /* ==========================================================================
+     Callouts — symmetric padding; text never touches the border
+     ====================================================================== */
   .callout {
-    margin-top: 26px; padding: 18px 20px; max-width: 860px;
-    background: var(--panel); border: 1px solid var(--border);
-    border-left: 3px solid var(--accent); border-radius: 10px;
-    color: var(--muted); font-size: .97rem;
+    max-width: 52rem;
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 3px solid var(--accent); border-radius: var(--r-lg);
+    padding: var(--s5); color: var(--muted);
   }
-  .callout p { margin: 0; }
+  .callout p + p { margin-block-start: var(--s3); }
+  .callout a { text-decoration: underline; }
 
-  /* ---------- Figures ---------- */
-  figure { margin: 0; }
+  /* ==========================================================================
+     Figures
+     ====================================================================== */
+  figure { min-width: 0; }
   figure img {
-    width: 100%; display: block; border: 1px solid var(--border);
-    border-radius: 12px; background: var(--panel);
-    box-shadow: 0 18px 44px -22px rgba(0, 0, 0, .55);
+    display: block; width: 100%; height: auto;
+    border: 1px solid var(--line); border-radius: var(--r-xl);
+    background: var(--surface);
   }
-  figcaption { color: var(--muted); font-size: 14px; margin-top: 11px; }
-  .demo-hero { margin-top: 34px; }
-  .demo-hero img { border-radius: var(--radius); }
+  figcaption { margin-block-start: var(--s3); color: var(--muted); font-size: var(--fs-small); line-height: 1.5; }
+  .figure-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s5); }
 
-  /* ---------- Layout helpers ---------- */
-  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
-  .two > * { min-width: 0; }
-  @media (max-width: 840px) { .two { grid-template-columns: minmax(0, 1fr); } }
-  .mt { margin-top: 22px; }
+  /* ==========================================================================
+     Two-column helper
+     ====================================================================== */
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s6); align-items: start; }
 
-  /* ---------- Lists ---------- */
-  ul.clean { list-style: none; padding: 0; margin: 0; }
-  ul.clean li {
-    padding: 10px 0 10px 28px; position: relative;
-    color: var(--muted); border-bottom: 1px solid var(--border);
+  /* ==========================================================================
+     Lists
+     ====================================================================== */
+  .list li {
+    position: relative;
+    padding: var(--s3) 0 var(--s3) var(--s6);
+    color: var(--muted); border-bottom: 1px solid var(--line);
   }
-  ul.clean li:last-child { border-bottom: 0; }
-  ul.clean li::before { content: "→"; position: absolute; left: 2px; color: var(--mint); }
-  ul.warn li::before { content: "×"; color: var(--warn); font-weight: 700; }
-
-  .card.pos { border-color: rgba(110, 231, 199, .3); }
-  .card.neg { border-color: rgba(255, 157, 157, .3); }
-  .card.pos h3 { color: var(--mint); }
-  .card.neg h3 { color: var(--warn); }
-
-  /* ---------- Tables ---------- */
-  .table-scroll {
-    overflow-x: auto; border: 1px solid var(--border);
-    border-radius: 12px; background: var(--panel);
+  .list li:last-child { border-bottom: 0; }
+  .list li::before {
+    content: "→"; position: absolute; left: var(--s1); top: var(--s3);
+    color: var(--accent); font-size: var(--fs-small);
   }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .list-warn li::before { content: "×"; color: var(--warn); font-weight: 700; }
+  .card .list li:last-child { padding-block-end: 0; }
+  .card .list li:first-child { padding-block-start: 0; }
+
+  .card-ok { border-color: rgba(111, 207, 151, 0.35); }
+  .card-ok h3 { color: var(--ok); }
+  .card-neg { border-color: rgba(229, 120, 122, 0.35); }
+  .card-neg h3 { color: var(--warn); }
+  .card-ok h3, .card-neg h3 { font-size: var(--fs-h3); margin-block-end: var(--s4); }
+
+  /* ==========================================================================
+     Tables
+     ====================================================================== */
+  .table-wrap {
+    overflow-x: auto; border: 1px solid var(--line);
+    border-radius: var(--r-xl); background: var(--surface);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: var(--fs-small); }
   th, td {
-    text-align: left; padding: 11px 16px; vertical-align: top;
-    border-bottom: 1px solid var(--border);
+    text-align: left; vertical-align: top;
+    padding: var(--s3) var(--s4);
+    border-bottom: 1px solid var(--line);
   }
-  tr:last-child td { border-bottom: 0; }
+  tbody tr:last-child td { border-bottom: 0; }
   th {
-    color: var(--muted); font-weight: 650; font-size: 12.5px;
-    text-transform: uppercase; letter-spacing: .06em;
-    background: rgba(255, 255, 255, .02);
+    font-size: var(--fs-micro); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted); background: var(--surface-2); white-space: nowrap;
   }
   td code {
-    color: #dbe2f5; font-size: 13px; white-space: nowrap;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: var(--fs-code); color: var(--text); white-space: nowrap;
   }
 
-  /* ---------- Footer ---------- */
-  footer {
-    border-top: 1px solid var(--border); padding: 42px 0 64px;
-    color: var(--muted); font-size: 14px;
+  /* ==========================================================================
+     Footer
+     ====================================================================== */
+  .footer {
+    border-top: 1px solid var(--line);
+    padding-block: var(--s7);
+    color: var(--muted); font-size: var(--fs-small);
   }
-  footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; }
+  .footer .container { display: flex; flex-wrap: wrap; gap: var(--s3) var(--s6); justify-content: space-between; }
 
-  @media (max-width: 760px) {
-    .hero { padding: 64px 0 56px; }
-    section { padding: 56px 0; }
-    .nav-inner { gap: 12px; }
+  /* ==========================================================================
+     Responsive
+     ====================================================================== */
+  @media (max-width: 60rem) {
+    .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 52rem) {
+    .flow { grid-template-columns: minmax(0, 1fr); }
+    .flow-arrow { justify-content: center; }
+    .flow-arrow svg { transform: rotate(90deg); }
+  }
+  @media (max-width: 48rem) {
+    :root { --gutter: var(--s4); }
+    main > section { padding-block: var(--s8); }
+    .cols { grid-template-columns: minmax(0, 1fr); }
+    .figure-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 40rem) {
+    .card-grid { grid-template-columns: minmax(0, 1fr); }
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    * { transition: none !important; }
+    *, *::before, *::after { transition: none !important; }
   }
 </style>
 </head>
-<body id="top">
+<body>
 
-<a class="skip" href="#main">Skip to content</a>
+<a class="skip-link" href="#main">Skip to content</a>
 
-<nav class="site-nav" aria-label="Primary">
-  <div class="wrap nav-inner">
-    <span class="brand"><span class="brand-mark" aria-hidden="true"></span>Devdooth</span>
+<nav class="nav" aria-label="Primary">
+  <div class="container nav-row">
+    <span class="brand">
+      <svg class="brand-mark" viewBox="0 0 20 20" aria-hidden="true">
+        <rect width="20" height="20" rx="5" fill="#7c8cff"/>
+        <circle cx="10" cy="10" r="3.2" fill="#0b0e13"/>
+      </svg>
+      Devdooth
+    </span>
     <span class="nav-links">
       <a href="#why">Why</a>
       <a href="#how">How it works</a>
@@ -338,158 +428,253 @@
 
 <main id="main" tabindex="-1">
 
-  <header class="hero">
-    <div class="wrap">
-      <p class="tag">Browser infrastructure</p>
-      <h1>Lease a real browser on <span class="grad">hardware you already own.</span></h1>
-      <p class="lead">
-        Devdooth seats Chrome on your Mac, Linux box, or Raspberry Pi and hands your agent a
-        standard CDP endpoint. Workers dial out, so nothing on your network needs an inbound
-        port, and browser profiles never leave the machine.
-      </p>
-      <div class="cta">
-        <a class="btn primary" href="#install">Get started</a>
-        <a class="btn" href="https://github.com/unnipv/devdooth">View on GitHub</a>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container stack-section">
+      <header class="section-head">
+        <p class="kicker">Self-hosted browser infrastructure</p>
+        <h1>Lease a real browser on hardware you already own.</h1>
+        <p class="lede">
+          Devdooth turns a Mac, a Linux box, or a Raspberry Pi into a pool of real
+          Chrome browsers for your agents and scripts. Workers dial out, so there
+          are no inbound ports to open. Every lease is a standard CDP endpoint,
+          and browser profiles never leave the machine.
+        </p>
+      </header>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#install">Get started</a>
+        <a class="btn" href="https://github.com/unnipv/devdooth">GitHub</a>
       </div>
-      <div class="terminal">
-        <div class="terminal-bar">
-          <span class="td" aria-hidden="true"></span><span class="td" aria-hidden="true"></span><span class="td" aria-hidden="true"></span>
-          <span class="term-label">install — sh</span>
-          <button class="copy" aria-label="Copy install command" data-copy="curl -fsSL https://raw.githubusercontent.com/unnipv/devdooth/main/scripts/install.sh | sh">Copy</button>
+      <div class="codeblock">
+        <div class="codeblock-head">
+          <span class="codeblock-label">sh — install</span>
+          <button class="copy-btn" data-copy="curl -fsSL https://raw.githubusercontent.com/unnipv/devdooth/main/scripts/install.sh | sh" aria-label="Copy install command">Copy</button>
         </div>
-        <pre><span class="c"># one binary: coordinator, worker, and CLI</span>
-curl -fsSL https://raw.githubusercontent.com/unnipv/devdooth/main/scripts/install.sh | sh
-devdooth version</pre>
+        <pre tabindex="0"><span class="c"># one static binary: coordinator, worker, and CLI</span>
+curl -fsSL https://raw.githubusercontent.com/unnipv/devdooth/main/scripts/install.sh | sh</pre>
       </div>
     </div>
-  </header>
+  </section>
 
-  <section id="why" class="wrap">
-    <h2>Why Devdooth</h2>
-    <p class="sub">A browser pool that lives on the machines and accounts you already use.</p>
-    <div class="features">
-      <div class="card"><span class="ico" aria-hidden="true">🔌</span><h3>Outbound-only workers</h3>
-        <p>Workers need no inbound network port. NAT and firewalls stay exactly as they are.</p></div>
-      <div class="card"><span class="ico" aria-hidden="true">🧭</span><h3>Standard endpoints</h3>
-        <p>Each lease is a browser-level CDP WebSocket. Ordinary Playwright, Puppeteer, or any CDP client connects unchanged.</p></div>
-      <div class="card"><span class="ico" aria-hidden="true">🗂️</span><h3>Profiles stay local</h3>
-        <p>Named profiles live on the worker and persist across leases. Log in once, reuse it later.</p></div>
-      <div class="card"><span class="ico" aria-hidden="true">🎯</span><h3>Capability routing</h3>
-        <p>Request by node, browser, profile, or headful capability. Hard filters, then least-loaded selection.</p></div>
-      <div class="card"><span class="ico" aria-hidden="true">🤝</span><h3>Composes, never reinvents</h3>
-        <p>Devdooth does not implement a DOM agent. It leases browsers and hands them to tools that do.</p></div>
-      <div class="card"><span class="ico" aria-hidden="true">🛡️</span><h3>Honest security model</h3>
-        <p>Loopback-bound debug ports, hashed device tokens, per-lease credentials, worker-enforced TTLs.</p></div>
+  <!-- Why -->
+  <section id="why">
+    <div class="container stack-section">
+      <header class="section-head">
+        <p class="kicker">Why Devdooth</p>
+        <h2>A browser pool on machines you control</h2>
+        <p class="lede">Six properties that let Devdooth drop into an existing setup without new infrastructure.</p>
+      </header>
+      <div class="card-grid">
+        <div class="card">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4L11 13"/><path d="M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg>
+          </span>
+          <h3>Outbound-only workers</h3>
+          <p>Workers hold one outgoing WebSocket to the coordinator. NAT, firewalls, and CGNAT stay untouched — nothing listens on the internet.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+          </span>
+          <h3>Standard CDP endpoints</h3>
+          <p>Each lease is a browser-level CDP WebSocket. Playwright, Puppeteer, or any CDP client connects in one line — no SDK to adopt.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+          </span>
+          <h3>Profiles stay local</h3>
+          <p>Named Chrome profiles live on the worker's disk and persist across leases. Cookies and logins never move between machines.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16l-6 7v5l-4 2v-7L4 5z"/></svg>
+          </span>
+          <h3>Capability routing</h3>
+          <p>Request a lease by node, profile, or headful mode. Hard filters are applied first, then the least-loaded matching worker wins.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/></svg>
+          </span>
+          <h3>Composes with your agents</h3>
+          <p>Devdooth leases browsers; it does not drive them. Playwright MCP, browser-use, or your own CDP code does the driving.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 8.4-7 10-4-1.6-7-5.6-7-10V6l7-3z"/><path d="M9.5 12l1.8 1.8L15 10"/></svg>
+          </span>
+          <h3>Honest security</h3>
+          <p>Loopback-bound debug ports, hashed device tokens, per-lease credentials, worker-enforced TTLs — and a threat model that says what it will not protect.</p>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section id="how" class="wrap">
-    <h2>How it works</h2>
-    <p class="sub">The coordinator is a control plane and a relay. It never parses CDP traffic.</p>
-    <div class="diagram">
-      <div class="node"><span class="node-num" aria-hidden="true">1</span><strong>Agent or Playwright</strong>leases over HTTP, then speaks CDP</div>
-      <div class="arrow" aria-hidden="true">→</div>
-      <div class="node"><span class="node-num" aria-hidden="true">2</span><strong>Coordinator</strong>node registry, leases, scheduling, auth, relay</div>
-      <div class="arrow" aria-hidden="true">←</div>
-      <div class="node"><span class="node-num" aria-hidden="true">3</span><strong>Worker</strong>launches Chrome, loopback debug port, local profile, outbound tunnel</div>
-    </div>
-    <div class="callout">
-      <p>
-        A worker opens one outbound control WebSocket. When a lease is requested, the coordinator
-        reserves capacity, the worker launches a browser, and a second outbound tunnel carries CDP
-        frames between the caller and that browser. Message type and boundaries are preserved;
-        a slow consumer is dropped rather than buffered without limit.
-      </p>
-    </div>
-  </section>
-
-  <section id="demo" class="wrap">
-    <h2>See it working</h2>
-    <p class="sub">
-      Captured from a real run: a coordinator on a Mac with workers on that Mac and on a
-      Raspberry Pi 5. The Pi has no inbound ports.
-    </p>
-    <figure class="demo-hero">
-      <img src="assets/demo.gif" alt="Devdooth CLI listing a Mac and a Raspberry Pi node, then a leased browser showing the Pi's residential network.">
-      <figcaption>Two nodes, a lease, and the browser's real network egress.</figcaption>
-    </figure>
-    <div class="two mt">
-      <figure>
-        <img src="assets/pi-amazon.png" alt="Amazon search results with prices, loaded in a browser running on a Raspberry Pi." loading="lazy">
-        <figcaption>
-          A real Amazon search, run headless on the Pi through Devdooth.
-          Prices reflect the Pi's own region.
-        </figcaption>
-      </figure>
-      <figure>
-        <img src="assets/pi-network.png" alt="A card showing the browser's connection kind and region." loading="lazy">
-        <figcaption>
-          The browser uses the machine's real network: a residential ISP, not a
-          datacenter range.
-        </figcaption>
-      </figure>
-    </div>
-
-    <h3 class="kicker">Marketplaces and travel</h3>
-    <p class="sub">Loaded from the Pi's own connection, no proxy.</p>
-    <div class="two">
-      <figure>
-        <img src="assets/amazon-in.png" alt="Amazon India homepage showing delivery to the browser's local city." loading="lazy">
-        <figcaption>Amazon.in, localized to the browser's own city and currency.</figcaption>
-      </figure>
-      <figure>
-        <img src="assets/flipkart.png" alt="Flipkart homepage." loading="lazy">
-        <figcaption>Flipkart, rendered with local pricing.</figcaption>
-      </figure>
-    </div>
-    <figure class="mt">
-      <img src="assets/booking.png" alt="Booking.com homepage." loading="lazy">
-      <figcaption>Booking.com, with the visitor's own region and currency.</figcaption>
-    </figure>
-
-    <h3 class="kicker">A profile that persists</h3>
-    <p class="sub">One profile, two leases, a brand-new browser each time.</p>
-    <div class="two">
-      <figure>
-        <img src="assets/profile-lease-1.png" alt="A card showing a value saved by the browser in the first lease." loading="lazy">
-        <figcaption>Lease 1: the browser saves a value in its profile.</figcaption>
-      </figure>
-      <figure>
-        <img src="assets/profile-lease-2.png" alt="A card showing the same value still present in a second lease." loading="lazy">
-        <figcaption>Lease 2, new browser process: the value is still there.</figcaption>
-      </figure>
-    </div>
-
-    <figure class="mt">
-      <img src="assets/cli-nodes.png" alt="Terminal showing devdooth nodes, lease, and devices output." loading="lazy">
-      <figcaption>Everything is one binary and a small HTTP API.</figcaption>
-    </figure>
-    <div class="callout">
-      <p>
-        Sites that aggressively challenge automation are left alone. Devdooth is not an
-        anti-bot or CAPTCHA-bypass product; it simply uses the network and profile of the
-        machine you chose. Some sites still refuse headless Chromium regardless of IP, and
-        those are not shown here.
-      </p>
+  <!-- How it works -->
+  <section id="how">
+    <div class="container stack-section">
+      <header class="section-head">
+        <p class="kicker">How it works</p>
+        <h2>Dial-out workers, a thin coordinator</h2>
+        <p class="lede">The coordinator is a control plane and a byte-level relay. It never parses CDP traffic.</p>
+      </header>
+      <div class="flow">
+        <div class="flow-node">
+          <span class="flow-num" aria-hidden="true">1</span>
+          <h3>Agent or Playwright</h3>
+          <p>Requests a lease over HTTP, then speaks plain CDP on the returned endpoint.</p>
+        </div>
+        <span class="flow-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M14 6l6 6-6 6"/></svg>
+        </span>
+        <div class="flow-node">
+          <span class="flow-num" aria-hidden="true">2</span>
+          <h3>Coordinator</h3>
+          <p>Node registry, leases, scheduling, and auth. Relays frames without inspecting them.</p>
+        </div>
+        <span class="flow-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4"/><path d="M10 6l-6 6 6 6"/></svg>
+        </span>
+        <div class="flow-node">
+          <span class="flow-num" aria-hidden="true">3</span>
+          <h3>Worker</h3>
+          <p>Launches Chrome with a loopback debug port, keeps profiles on local disk, tunnels everything outbound.</p>
+        </div>
+      </div>
+      <div class="callout">
+        <p>
+          A worker opens one outbound control WebSocket. When a lease arrives, it launches
+          a browser and opens a second outbound tunnel that carries CDP frames between the
+          caller and that browser. Message boundaries are preserved and buffers are bounded:
+          a stalled peer is dropped rather than queued without limit.
+        </p>
+      </div>
     </div>
   </section>
 
-  <section id="install" class="wrap">
-    <h2>Quickstart</h2>
-    <p class="sub">Three steps: start a coordinator, enroll a machine, lease a browser.</p>
+  <!-- Demo -->
+  <section id="demo">
+    <div class="container stack-section">
+      <header class="section-head">
+        <p class="kicker">Demo</p>
+        <h2>See it working</h2>
+        <p class="lede">
+          Captured from a real run: a coordinator on a Mac, with workers on that Mac and on a
+          Raspberry Pi 5 behind a home router. The Pi has no inbound ports.
+        </p>
+      </header>
 
-    <h3 class="step"><span class="num" aria-hidden="true">1</span>Coordinator</h3>
-    <div class="code-block">
-      <button class="copy" aria-label="Copy coordinator command" data-copy="devdooth coordinator --addr :8080 --store devdooth.db">Copy</button>
-      <pre><span class="c"># on a host with a reachable address</span>
+      <figure>
+        <img src="assets/demo.gif" width="1000" height="720" alt="Devdooth CLI listing a Mac and a Raspberry Pi node, then a leased browser reporting the Pi's residential network.">
+        <figcaption>Enroll two nodes, lease a browser, and read back its real network egress.</figcaption>
+      </figure>
+
+      <div class="stack-group">
+        <div class="group-head">
+          <h3>Marketplaces and travel</h3>
+          <p>Loaded over the Pi's own connection — no proxy, no datacenter IP.</p>
+        </div>
+        <div class="figure-grid">
+          <figure>
+            <img src="assets/amazon-in.png" width="1000" height="703" loading="lazy" decoding="async" alt="Amazon India homepage localized to the browser's own city.">
+            <figcaption>Amazon.in, localized to the browser's own city and currency.</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/flipkart.png" width="1000" height="703" loading="lazy" decoding="async" alt="Flipkart homepage rendered with local pricing.">
+            <figcaption>Flipkart, rendered with local pricing.</figcaption>
+          </figure>
+        </div>
+        <figure>
+          <img src="assets/booking.png" width="1000" height="703" loading="lazy" decoding="async" alt="Booking.com homepage with the visitor's own region and currency.">
+          <figcaption>Booking.com, with the visitor's own region and currency.</figcaption>
+        </figure>
+      </div>
+
+      <div class="stack-group">
+        <div class="group-head">
+          <h3>The machine's own network</h3>
+          <p>What the leased browser reports about itself.</p>
+        </div>
+        <div class="figure-grid">
+          <figure>
+            <img src="assets/pi-network.png" width="1280" height="900" loading="lazy" decoding="async" alt="A card showing the browser's connection type and region.">
+            <figcaption>The browser egresses on the machine's real connection — a residential ISP, not a datacenter range.</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/pi-amazon.png" width="1280" height="900" loading="lazy" decoding="async" alt="Amazon search results with prices, loaded in a browser running on a Raspberry Pi.">
+            <figcaption>A real Amazon search, run headless on the Pi. Prices reflect the Pi's own region.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <div class="stack-group">
+        <div class="group-head">
+          <h3>A profile that persists</h3>
+          <p>One profile, two leases, a brand-new browser process each time.</p>
+        </div>
+        <div class="figure-grid">
+          <figure>
+            <img src="assets/profile-lease-1.png" width="1280" height="900" loading="lazy" decoding="async" alt="A card showing a value saved by the browser during the first lease.">
+            <figcaption>Lease 1: the browser saves a value into its profile.</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/profile-lease-2.png" width="1280" height="900" loading="lazy" decoding="async" alt="A card showing the same value still present in a second lease.">
+            <figcaption>Lease 2, new browser process: the value is still there.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <figure>
+        <img src="assets/cli-nodes.png" width="2096" height="1120" loading="lazy" decoding="async" alt="Terminal showing devdooth nodes, lease, and devices output.">
+        <figcaption>The whole system is one binary and a small HTTP API.</figcaption>
+      </figure>
+
+      <div class="callout">
+        <p>
+          Sites that aggressively challenge automation are left alone. Devdooth is not an
+          anti-bot or CAPTCHA-bypass product — it uses the network and profile of whichever
+          machine you chose, and nothing more. Some sites refuse headless Chromium on any
+          IP address; those simply are not shown here.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quickstart -->
+  <section id="install">
+    <div class="container stack-section">
+      <header class="section-head">
+        <p class="kicker">Quickstart</p>
+        <h2>Up in three steps</h2>
+        <p class="lede">Run a coordinator, enroll a machine, lease a browser. Everything below uses the binary installed by the one-liner above.</p>
+      </header>
+
+      <div class="stack-group">
+        <div class="group-head">
+          <h3>1 · Start the coordinator</h3>
+        </div>
+        <div class="codeblock">
+          <div class="codeblock-head">
+            <span class="codeblock-label">sh</span>
+            <button class="copy-btn" data-copy="devdooth coordinator --addr :8080 --store devdooth.db" aria-label="Copy coordinator command">Copy</button>
+          </div>
+          <pre tabindex="0"><span class="c"># on any host the workers can reach</span>
 devdooth coordinator --addr :8080 --store devdooth.db
-<span class="c"># prints a generated admin token once</span></pre>
-    </div>
+<span class="c"># a generated admin token is printed once — save it</span></pre>
+        </div>
+      </div>
 
-    <h3 class="step"><span class="num" aria-hidden="true">2</span>Join a machine</h3>
-    <div class="code-block">
-      <button class="copy" aria-label="Copy enrollment and join commands" data-copy="devdooth enroll-token --url http://localhost:8080 --token <admin-token> --label macbook">Copy</button>
-      <pre><span class="c"># mint a single-use enrollment token on the coordinator host</span>
+      <div class="stack-group">
+        <div class="group-head">
+          <h3>2 · Enroll and join a machine</h3>
+        </div>
+        <div class="codeblock">
+          <div class="codeblock-head">
+            <span class="codeblock-label">sh</span>
+            <button class="copy-btn" data-copy="devdooth enroll-token --url http://localhost:8080 --token <admin-token> --label macbook" aria-label="Copy enrollment command">Copy</button>
+          </div>
+          <pre tabindex="0"><span class="c"># on the coordinator host: mint a single-use enrollment token</span>
 devdooth enroll-token --url http://localhost:8080 --token &lt;admin-token&gt; --label macbook
 
 <span class="c"># on the Mac / Pi / Linux box</span>
@@ -497,54 +682,96 @@ devdooth join --coordinator http://192.168.1.10:8080 \
   --enroll-token &lt;enrollment-token&gt; --name macbook
 
 devdooth worker --coordinator http://192.168.1.10:8080 --profiles shopping,work</pre>
-    </div>
-    <p class="note">
-      The device identity is stored on the worker, so restarts need no token. The coordinator keeps
-      only a hash. Inspect or revoke devices with <code class="inline">devdooth devices</code>.
-    </p>
+        </div>
+        <p class="note">
+          The device identity is stored on the worker, so restarts need no token; the
+          coordinator stores only a hash. Inspect or revoke devices with
+          <code class="inline">devdooth devices</code>.
+        </p>
+      </div>
 
-    <h3 class="step"><span class="num" aria-hidden="true">3</span>Lease and drive</h3>
-    <div class="code-block">
-      <button class="copy" aria-label="Copy lease command" data-copy="devdooth lease --url http://192.168.1.10:8080 --token <admin-token> --profile shopping --headful">Copy</button>
-      <pre>devdooth lease --url http://192.168.1.10:8080 --token &lt;admin-token&gt; \
+      <div class="stack-group">
+        <div class="group-head">
+          <h3>3 · Lease a browser</h3>
+        </div>
+        <div class="codeblock">
+          <div class="codeblock-head">
+            <span class="codeblock-label">sh</span>
+            <button class="copy-btn" data-copy="devdooth lease --url http://192.168.1.10:8080 --token <admin-token> --profile shopping --headful --ttl 1800" aria-label="Copy lease command">Copy</button>
+          </div>
+          <pre tabindex="0">devdooth lease --url http://192.168.1.10:8080 --token &lt;admin-token&gt; \
   --profile shopping --headful --ttl 1800
-<span class="c"># → ws://192.168.1.10:8080/v1/lease/lse_x/cdp?token=...</span></pre>
-    </div>
-    <div class="two mt">
-      <div class="code-block">
-        <pre><span class="c"># Python</span>
+<span class="c"># → prints JSON, including "endpoint": "ws://192.168.1.10:8080/v1/lease/lse_x/cdp?token=…"</span></pre>
+        </div>
+      </div>
+
+      <div class="stack-group">
+        <div class="group-head">
+          <h3>Drive it with Playwright</h3>
+        </div>
+        <div class="cols">
+          <div class="codeblock">
+            <div class="codeblock-head">
+              <span class="codeblock-label">python</span>
+              <button class="copy-btn" data-copy="from playwright.async_api import async_playwright
+
+async with async_playwright() as p:
+    browser = await p.chromium.connect_over_cdp(session.endpoint)
+    page = browser.contexts[0].pages[0]
+    await page.goto(&quot;https://example.com&quot;)" aria-label="Copy Python Playwright snippet">Copy</button>
+            </div>
+            <pre tabindex="0"><span class="k">from</span> playwright.async_api <span class="k">import</span> async_playwright
+
 <span class="k">async with</span> async_playwright() <span class="k">as</span> p:
     browser = <span class="k">await</span> p.chromium.connect_over_cdp(session.endpoint)
     page = browser.contexts[<span class="s">0</span>].pages[<span class="s">0</span>]
     <span class="k">await</span> page.goto(<span class="s">"https://example.com"</span>)</pre>
-      </div>
-      <div class="code-block">
-        <pre><span class="c">// Node</span>
+          </div>
+          <div class="codeblock">
+            <div class="codeblock-head">
+              <span class="codeblock-label">node</span>
+              <button class="copy-btn" data-copy="import { chromium } from 'playwright-core';
+
+const browser = await chromium.connectOverCDP(session.endpoint);
+const page = browser.contexts()[0].pages()[0];
+await page.goto('https://example.com');" aria-label="Copy Node Playwright snippet">Copy</button>
+            </div>
+            <pre tabindex="0"><span class="k">import</span> { chromium } <span class="k">from</span> <span class="s">'playwright-core'</span>;
+
 <span class="k">const</span> browser = <span class="k">await</span> chromium.connectOverCDP(session.endpoint);
 <span class="k">const</span> page = browser.contexts()[<span class="s">0</span>].pages()[<span class="s">0</span>];
 <span class="k">await</span> page.goto(<span class="s">'https://example.com'</span>);</pre>
+          </div>
+        </div>
+        <p class="note">
+          <code class="inline">session.endpoint</code> stands for the endpoint printed by
+          <code class="inline">devdooth lease</code> — there is no SDK. Copy the value into
+          your own variable and hand it to any CDP client.
+        </p>
       </div>
     </div>
-    <p class="note">
-      <code class="inline">session.endpoint</code> stands for the endpoint printed by
-      <code class="inline">devdooth lease</code>. There is no SDK yet: copy that value (or set it in
-      your own variable) and pass it to your CDP client.
-    </p>
   </section>
 
-  <section id="agents" class="wrap">
-    <h2>Use it from an AI agent</h2>
-    <p class="sub">
-      Devdooth ships no browser tools of its own. <code class="inline">devdooth mcp</code> leases a
-      browser, starts upstream Playwright MCP against it, and releases the lease when the MCP
-      server exits. The default launcher runs <code class="inline">npx -y @playwright/mcp</code>,
-      so Node.js (with <code class="inline">npx</code>) must be available where the MCP client runs.
-    </p>
-    <div class="code-block">
-      <button class="copy" aria-label="Copy MCP client configuration" data-copy='{"mcpServers":{"devdooth":{"command":"/absolute/path/to/devdooth","args":["mcp","--url","http://192.168.1.10:8080","--token","<admin-token>","--node","macbook","--profile","shopping","--headful"]}}}'>Copy</button>
-      <pre><span class="c">// MCP client config (Claude Code, Cursor, VS Code, …)</span>
-<span class="c">// run `command -v devdooth` to get the binary path</span>
-{
+  <!-- Agents -->
+  <section id="agents">
+    <div class="container stack-section">
+      <header class="section-head">
+        <p class="kicker">Agents</p>
+        <h2>Drive it from an AI agent</h2>
+        <p class="lede">
+          Devdooth ships no browsing tools of its own. <code class="inline">devdooth mcp</code>
+          leases a browser, starts the upstream Playwright MCP against it, and releases the
+          lease when the server exits.
+        </p>
+      </header>
+
+      <div class="stack-group">
+        <div class="codeblock">
+          <div class="codeblock-head">
+            <span class="codeblock-label">json — MCP client config</span>
+            <button class="copy-btn" data-copy='{"mcpServers":{"devdooth":{"command":"/absolute/path/to/devdooth","args":["mcp","--url","http://192.168.1.10:8080","--token","<admin-token>","--node","macbook","--profile","shopping","--headful"]}}}' aria-label="Copy MCP client configuration">Copy</button>
+          </div>
+          <pre tabindex="0">{
   <span class="s">"mcpServers"</span>: {
     <span class="s">"devdooth"</span>: {
       <span class="s">"command"</span>: <span class="s">"/absolute/path/to/devdooth"</span>,
@@ -553,39 +780,63 @@ devdooth worker --coordinator http://192.168.1.10:8080 --profiles shopping,work<
     }
   }
 }</pre>
-    </div>
-    <p class="note">
-      Then ask the agent to browse. The browser it drives is running on your Mac, using that
-      profile's logins and that machine's network.
-    </p>
-    <div class="code-block">
-      <pre><span class="c"># or point any CDP-aware library straight at a lease</span>
-<span class="k">from</span> browser_use <span class="k">import</span> Browser
+        </div>
+        <p class="note">
+          Works with Claude Code, Cursor, VS Code, and other MCP clients — run
+          <code class="inline">command -v devdooth</code> to fill in the binary path. The default
+          launcher runs <code class="inline">npx -y @playwright/mcp</code>, so Node.js (with
+          <code class="inline">npx</code>) must be available where the MCP client runs. Then just
+          ask the agent to browse: it drives a browser on your machine, with that profile's
+          logins and that machine's network.
+        </p>
+      </div>
+
+      <div class="codeblock">
+        <div class="codeblock-head">
+          <span class="codeblock-label">python — or any CDP-aware library</span>
+          <button class="copy-btn" data-copy="from browser_use import Browser
+
+browser = Browser(cdp_url=session.endpoint)" aria-label="Copy browser-use snippet">Copy</button>
+        </div>
+        <pre tabindex="0"><span class="k">from</span> browser_use <span class="k">import</span> Browser
+
 browser = Browser(cdp_url=session.endpoint)</pre>
-    </div>
-    <div class="callout">
-      <p>
-        Using a coding agent to set things up? Point it at
-        <a href="https://github.com/unnipv/devdooth/blob/main/AGENTS.md">AGENTS.md</a> —
-        it has a copy-paste task that builds, starts, leases, and verifies.
-      </p>
+      </div>
+
+      <div class="callout">
+        <p>
+          Using a coding agent for the setup itself? Point it at
+          <a href="https://github.com/unnipv/devdooth/blob/main/AGENTS.md">AGENTS.md</a> —
+          it contains a copy-paste task that builds, starts, leases, and verifies the whole system.
+        </p>
+      </div>
     </div>
   </section>
 
-  <section id="profiles" class="wrap">
-    <h2>Persistent profiles</h2>
-    <div class="two">
-      <div>
-        <ul class="clean">
-          <li>Profiles live at <code class="inline">~/.devdooth/profiles/&lt;name&gt;</code> on the worker (<code class="inline">--data-dir</code> overrides the location).</li>
-          <li>One profile is opened by at most one browser at a time; a second request fails explicitly.</li>
-          <li>Profile data stays on its worker and is never copied between machines. A profile-only request matches any online worker advertising that name; pass <code class="inline">--node</code> with <code class="inline">--profile</code> to pin a specific machine.</li>
-          <li>Complete a login or MFA once in headful mode, and later leases reuse it.</li>
+  <!-- Profiles -->
+  <section id="profiles">
+    <div class="container stack-section">
+      <header class="section-head">
+        <p class="kicker">Profiles</p>
+        <h2>Log in once, keep the profile</h2>
+        <p class="lede">
+          Profiles are named, worker-local Chrome directories. Declare them when the worker
+          starts, then request them by name at lease time.
+        </p>
+      </header>
+      <div class="cols">
+        <ul class="list">
+          <li>Profiles live at <code class="inline">~/.devdooth/profiles/&lt;name&gt;</code> on the worker; <code class="inline">--data-dir</code> relocates them.</li>
+          <li>One browser at a time opens a profile — a concurrent request fails explicitly instead of corrupting it.</li>
+          <li>Profile data never leaves or moves between machines. A profile-only request matches any online worker advertising that name; add <code class="inline">--node</code> to pin a specific machine.</li>
+          <li>Complete a login or MFA once in headful mode, and every later lease on that profile reuses it.</li>
         </ul>
-      </div>
-      <div>
-        <div class="code-block">
-          <pre>devdooth worker --coordinator ... --profiles shopping,work
+        <div class="codeblock">
+          <div class="codeblock-head">
+            <span class="codeblock-label">sh</span>
+            <button class="copy-btn" data-copy="devdooth lease --url http://192.168.1.10:8080 --token <admin-token> --node macbook --profile shopping --headful" aria-label="Copy profile lease command">Copy</button>
+          </div>
+          <pre tabindex="0">devdooth worker --coordinator ... --profiles shopping,work
 
 devdooth lease --url http://192.168.1.10:8080 --token &lt;admin-token&gt; \
   --node macbook --profile shopping --headful
@@ -595,108 +846,134 @@ devdooth lease --url http://192.168.1.10:8080 --token &lt;admin-token&gt; \
     </div>
   </section>
 
-  <section id="security" class="wrap">
-    <h2>Security model</h2>
-    <p class="sub">
-      A leased browser may be logged into your email, bank, or internal services. Devdooth treats
-      raw browser access as the powerful capability it is.
-    </p>
-    <div class="two">
-      <div class="card pos">
-        <h3>What it does</h3>
-        <ul class="clean">
-          <li>Outbound-only workers; the browser's debug port binds to loopback.</li>
-          <li>Separate admin and worker credentials. Equal-length admin/static-worker tokens are compared with a full scan; enrolled device tokens are authenticated by hash lookup.</li>
-          <li>Single-use, expiring enrollment tokens; only hashes stored.</li>
-          <li>Per-lease credentials bounded by the lease TTL.</li>
-          <li>Worker enforces the TTL even if the coordinator is gone.</li>
-          <li>Bounded buffers; stalled peers are disconnected.</li>
-          <li>The relay never logs CDP payloads. Normal lifecycle logs omit credentials; development startup and credential-recovery paths deliberately print a token so it is not lost.</li>
-        </ul>
+  <!-- Security -->
+  <section id="security">
+    <div class="container stack-section">
+      <header class="section-head">
+        <p class="kicker">Security</p>
+        <h2>An honest security model</h2>
+        <p class="lede">
+          A leased browser may be logged into your email, bank, or internal services.
+          Devdooth treats raw browser access as the powerful — and dangerous — capability it is.
+        </p>
+      </header>
+      <div class="cols">
+        <div class="card card-ok">
+          <h3>What it does</h3>
+          <ul class="list">
+            <li>Workers are outbound-only; each browser's debug port binds to loopback.</li>
+            <li>Separate admin and worker credentials. Equal-length tokens are compared with a full scan; enrolled device tokens are authenticated by hash lookup.</li>
+            <li>Enrollment tokens are single-use and expiring, and only their hashes are stored.</li>
+            <li>Per-lease credentials are bounded by the lease TTL, which the worker enforces even if the coordinator is gone.</li>
+            <li>Buffers are bounded and stalled peers are disconnected; the relay never logs CDP payloads.</li>
+          </ul>
+        </div>
+        <div class="card card-neg">
+          <h3>What it does not do</h3>
+          <ul class="list list-warn">
+            <li>Protect you from a compromised coordinator.</li>
+            <li>Make an authorized CDP client safe — it can read local files and reach local-network services.</li>
+            <li>Treat CDP filtering as a security boundary.</li>
+            <li>Share one coordinator across untrusted owners — Devdooth is single-owner.</li>
+          </ul>
+        </div>
       </div>
-      <div class="card neg">
-        <h3>What it will not do</h3>
-        <ul class="clean warn">
-          <li>Protect you from a compromised coordinator.</li>
-          <li>Make an authorized CDP client safe: it can read local files and reach local-network services.</li>
-          <li>Treat CDP filtering as a security boundary.</li>
-          <li>Share one coordinator safely across untrusted owners (single-owner V1).</li>
-        </ul>
-      </div>
+      <p class="note">
+        For real isolation, run workers under a separate OS account, container, or VM, and
+        advertise only the profiles you are willing to lend. Terminate TLS at a reverse proxy
+        for non-local deployments and set <code class="inline">--public-url https://…</code>.
+        The full threat model is
+        <a href="https://github.com/unnipv/devdooth/blob/main/docs/threat-model.md">in the repo</a>.
+      </p>
     </div>
-    <p class="note">
-      For real isolation, run workers under a separate OS account, container, or VM, and only
-      expose the profiles you are willing to lend. Terminate TLS at a reverse proxy for
-      non-local deployments and set <code class="inline">--public-url https://…</code>.
-    </p>
   </section>
 
-  <section id="reference" class="wrap">
-    <h2>Reference</h2>
+  <!-- Reference -->
+  <section id="reference">
+    <div class="container stack-section">
+      <header class="section-head">
+        <p class="kicker">Reference</p>
+        <h2>CLI and HTTP API</h2>
+        <p class="lede">Everything the binary and the coordinator expose, on one page.</p>
+      </header>
 
-    <h3 class="kicker">CLI</h3>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr><th scope="col">Command</th><th scope="col">Purpose</th></tr>
-        </thead>
-        <tbody>
-          <tr><td><code>devdooth coordinator</code></td><td>Run the control plane and relay.</td></tr>
-          <tr><td><code>devdooth enroll-token</code></td><td>Mint a single-use enrollment token.</td></tr>
-          <tr><td><code>devdooth join</code></td><td>Enroll this machine and store its device identity.</td></tr>
-          <tr><td><code>devdooth worker</code></td><td>Connect outbound and lend this machine's browsers.</td></tr>
-          <tr><td><code>devdooth nodes</code></td><td>List connected workers and capabilities.</td></tr>
-          <tr><td><code>devdooth devices</code></td><td>List or revoke enrolled devices.</td></tr>
-          <tr><td><code>devdooth lease</code> / <code>release</code></td><td>Acquire or release a browser.</td></tr>
-          <tr><td><code>devdooth pause</code> / <code>resume</code></td><td>Hand a headful session to a human, then back.</td></tr>
-          <tr><td><code>devdooth mcp</code></td><td>Lease a browser and supervise Playwright MCP.</td></tr>
-        </tbody>
-      </table>
+      <div class="stack-group">
+        <div class="group-head">
+          <h3>CLI</h3>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Command</th><th scope="col">Purpose</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>devdooth coordinator</code></td><td>Run the control plane and relay.</td></tr>
+              <tr><td><code>devdooth enroll-token</code></td><td>Mint a single-use enrollment token.</td></tr>
+              <tr><td><code>devdooth join</code></td><td>Enroll this machine and store its device identity.</td></tr>
+              <tr><td><code>devdooth worker</code></td><td>Connect outbound and lend this machine's browsers.</td></tr>
+              <tr><td><code>devdooth nodes</code></td><td>List connected workers and capabilities.</td></tr>
+              <tr><td><code>devdooth devices</code></td><td>List or revoke enrolled devices.</td></tr>
+              <tr><td><code>devdooth lease</code> / <code>release</code></td><td>Acquire or release a browser.</td></tr>
+              <tr><td><code>devdooth pause</code> / <code>resume</code></td><td>Hand a headful session to a human, then back.</td></tr>
+              <tr><td><code>devdooth mcp</code></td><td>Lease a browser and supervise Playwright MCP.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="stack-group">
+        <div class="group-head">
+          <h3>HTTP API</h3>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Method</th><th scope="col">Path</th><th scope="col">Purpose</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>GET</td><td><code>/healthz</code></td><td>Liveness.</td></tr>
+              <tr><td>GET</td><td><code>/v1/nodes</code></td><td>Connected workers and capabilities.</td></tr>
+              <tr><td>POST</td><td><code>/v1/leases</code></td><td>Acquire a browser.</td></tr>
+              <tr><td>GET</td><td><code>/v1/leases/{id}</code></td><td>Lease state.</td></tr>
+              <tr><td>DELETE</td><td><code>/v1/leases/{id}</code></td><td>Release, waiting for teardown.</td></tr>
+              <tr><td>POST</td><td><code>/v1/leases/{id}/pause</code></td><td>Detach the controller for human take-over.</td></tr>
+              <tr><td>POST</td><td><code>/v1/leases/{id}/resume</code></td><td>Allow a controller to attach again.</td></tr>
+              <tr><td>GET</td><td><code>/v1/lease/{id}/cdp</code></td><td>CDP WebSocket endpoint.</td></tr>
+              <tr><td>POST</td><td><code>/v1/enroll-tokens</code></td><td>Mint an enrollment token.</td></tr>
+              <tr><td>POST</td><td><code>/v1/enroll</code></td><td>Redeem a token for a device identity.</td></tr>
+              <tr><td>GET</td><td><code>/v1/devices</code></td><td>List enrolled devices.</td></tr>
+              <tr><td>DELETE</td><td><code>/v1/devices/{id}</code></td><td>Revoke a device and drop its connection.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="stack-group">
+        <div class="group-head">
+          <h3>Limitations</h3>
+        </div>
+        <ul class="list">
+          <li>Chromium-family browsers only (CDP).</li>
+          <li>One browser process per lease; no multi-context packing.</li>
+          <li>Single owner; no ACLs.</li>
+          <li>Workers use installed browsers — Devdooth downloads none.</li>
+          <li>Human take-over is cooperative (pause/resume), not enforced ownership.</li>
+          <li>Remote uploads and downloads vary by browser; verify them per use case.</li>
+        </ul>
+      </div>
     </div>
-
-    <h3 class="kicker">HTTP API</h3>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr><th scope="col">Method</th><th scope="col">Path</th><th scope="col">Purpose</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>GET</td><td><code>/healthz</code></td><td>Liveness.</td></tr>
-          <tr><td>GET</td><td><code>/v1/nodes</code></td><td>Connected workers and capabilities.</td></tr>
-          <tr><td>POST</td><td><code>/v1/leases</code></td><td>Acquire a browser.</td></tr>
-          <tr><td>GET</td><td><code>/v1/leases/{id}</code></td><td>Lease state.</td></tr>
-          <tr><td>DELETE</td><td><code>/v1/leases/{id}</code></td><td>Release, waiting for teardown.</td></tr>
-          <tr><td>POST</td><td><code>/v1/leases/{id}/pause</code></td><td>Detach the controller for human take-over.</td></tr>
-          <tr><td>POST</td><td><code>/v1/leases/{id}/resume</code></td><td>Allow a controller to attach again.</td></tr>
-          <tr><td>GET</td><td><code>/v1/lease/{id}/cdp</code></td><td>CDP WebSocket endpoint.</td></tr>
-          <tr><td>POST</td><td><code>/v1/enroll-tokens</code></td><td>Mint an enrollment token.</td></tr>
-          <tr><td>POST</td><td><code>/v1/enroll</code></td><td>Redeem a token for a device identity.</td></tr>
-          <tr><td>GET</td><td><code>/v1/devices</code></td><td>List enrolled devices.</td></tr>
-          <tr><td>DELETE</td><td><code>/v1/devices/{id}</code></td><td>Revoke a device and drop its connection.</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3 class="kicker">Limitations</h3>
-    <ul class="clean">
-      <li>Chromium-family browsers only (CDP).</li>
-      <li>One browser process per lease; no multi-context packing.</li>
-      <li>Single owner; no ACLs.</li>
-      <li>Workers use installed browsers; Devdooth downloads none.</li>
-      <li>Human take-over is cooperative (pause/resume), not enforced ownership.</li>
-      <li>Remote uploads and downloads vary by browser; verify them per use case.</li>
-    </ul>
   </section>
+
 </main>
 
-<footer>
-  <div class="wrap">
-    <span>Devdooth · Apache-2.0 · <a href="https://github.com/unnipv/devdooth">github.com/unnipv/devdooth</a></span>
-    <span>Not an anti-bot, CAPTCHA, or fingerprint-evasion product.</span>
+<footer class="footer">
+  <div class="container">
+    <p>Devdooth · Apache-2.0 · <a href="https://github.com/unnipv/devdooth">github.com/unnipv/devdooth</a></p>
+    <p>Not an anti-bot, CAPTCHA, or fingerprint-evasion product.</p>
   </div>
 </footer>
 
-<p id="copy-status" class="sr-only" aria-live="polite"></p>
+<p id="copy-status" class="sr-only" role="status" aria-live="polite"></p>
 <script>
   // The Clipboard API is unavailable on insecure origins (the documented LAN
   // http:// deployment), so fall back to a selection-based copy.
@@ -714,7 +991,7 @@ devdooth lease --url http://192.168.1.10:8080 --token &lt;admin-token&gt; \
     return ok;
   }
 
-  for (const btn of document.querySelectorAll('.copy')) {
+  for (const btn of document.querySelectorAll('.copy-btn')) {
     btn.addEventListener('click', async () => {
       const label = btn.getAttribute('aria-label') || 'command';
       const text = btn.dataset.copy || '';
@@ -732,7 +1009,7 @@ devdooth lease --url http://192.168.1.10:8080 --token &lt;admin-token&gt; \
       const status = document.getElementById('copy-status');
       const prev = btn.textContent;
       btn.textContent = ok ? 'Copied' : 'Copy failed';
-      if (status) status.textContent = `${label}: ${ok ? 'copied' : 'copy failed'}`;
+      if (status) status.textContent = label + ': ' + (ok ? 'copied' : 'copy failed');
       setTimeout(() => { btn.textContent = prev; }, 1200);
     });
   }
