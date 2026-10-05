@@ -31,12 +31,30 @@ The Pi has no inbound ports; the browser uses the Pi's own residential network.*
 ## Demos
 
 Captured from real runs against a Raspberry Pi 5 worker (Chromium 154, headless)
-and a Mac worker (Chrome 154).
+and a Mac worker (Chrome 154), driven by ordinary Playwright over CDP.
+
+![CLI: nodes, lease, devices](docs/assets/cli-nodes.png)
+
+The browser's real network (a residential ISP, not a datacenter range) and a real
+search run on the Pi:
 
 | | |
 |---|---|
-| ![CLI: nodes, lease, devices](docs/assets/cli-nodes.png) | ![Browser network egress: residential ISP](docs/assets/pi-network.png) |
-| ![Amazon search loaded on the Pi](docs/assets/pi-amazon.png) | Two nodes, a lease, and a real Amazon search — all driven by ordinary Playwright over CDP. |
+| ![Browser network egress](docs/assets/pi-network.png) | ![Amazon search on the Pi](docs/assets/pi-amazon.png) |
+
+Marketplaces and travel, loaded from the Pi's own connection:
+
+| | |
+|---|---|
+| ![Amazon India](docs/assets/amazon-in.png) | ![Flipkart](docs/assets/flipkart.png) |
+
+![Booking.com](docs/assets/booking.png)
+
+One profile, two leases, a brand-new browser each time:
+
+| | |
+|---|---|
+| ![Lease 1](docs/assets/profile-lease-1.png) | ![Lease 2](docs/assets/profile-lease-2.png) |
 
 Sites that aggressively challenge automation are left alone. Devdooth is not an
 anti-bot or CAPTCHA-bypass product; it uses the network and profile of the
