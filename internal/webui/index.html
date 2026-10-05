@@ -268,6 +268,37 @@ devdooth version</pre>
         </figcaption>
       </figure>
     </div>
+
+    <h3 class="step" style="margin-top:32px">Marketplaces and travel</h3>
+    <p class="sub">Loaded from the Pi's own connection, no proxy.</p>
+    <div class="two">
+      <figure>
+        <img src="assets/amazon-in.png" alt="Amazon India homepage showing delivery to the browser's local city.">
+        <figcaption>Amazon.in, localized to the browser's own city and currency.</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/flipkart.png" alt="Flipkart homepage.">
+        <figcaption>Flipkart, rendered with local pricing.</figcaption>
+      </figure>
+    </div>
+    <figure style="margin-top:22px">
+      <img src="assets/booking.png" alt="Booking.com homepage.">
+      <figcaption>Booking.com, with the visitor's own region and currency.</figcaption>
+    </figure>
+
+    <h3 class="step" style="margin-top:32px">A profile that persists</h3>
+    <p class="sub">One profile, two leases, a brand-new browser each time.</p>
+    <div class="two">
+      <figure>
+        <img src="assets/profile-lease-1.png" alt="A card showing a value saved by the browser in the first lease.">
+        <figcaption>Lease 1: the browser saves a value in its profile.</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/profile-lease-2.png" alt="A card showing the same value still present in a second lease.">
+        <figcaption>Lease 2, new browser process: the value is still there.</figcaption>
+      </figure>
+    </div>
+
     <figure style="margin-top:22px">
       <img src="assets/cli-nodes.png" alt="Terminal showing devdooth nodes, lease, and devices output.">
       <figcaption>Everything is one binary and a small HTTP API.</figcaption>
@@ -275,7 +306,8 @@ devdooth version</pre>
     <p class="sub" style="margin-top:18px">
       Sites that aggressively challenge automation are left alone. Devdooth is not an
       anti-bot or CAPTCHA-bypass product; it simply uses the network and profile of the
-      machine you chose.
+      machine you chose. Some sites still refuse headless Chromium regardless of IP, and
+      those are not shown here.
     </p>
   </section>
 
