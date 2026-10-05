@@ -1,0 +1,13 @@
+{
+  "name": "devdooth-e2e",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end checks for Devdooth using ordinary Playwright.",
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "playwright-core": "^1.50.0"
+  },
+  "scripts": {
+    "e2e": "node scripts/e2e-playwright.mjs"
+  }
+}

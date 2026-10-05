@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go build ./...
+      - run: go vet ./...
+      - run: go test ./internal/... -race -count=1
+
+  e2e:
+    # Runs a real Chromium through the full relay.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
+      - name: Expose Chrome where the worker can find it
+        run: sudo ln -sf "${{ steps.chrome.outputs.chrome-path }}" /usr/local/bin/google-chrome
+      - run: go test ./e2e/ -count=1 -v
+        env:
+          # GitHub's Ubuntu runners restrict unprivileged user namespaces, so
+          # Chrome's sandbox needs to be disabled for the test browser only.
+          DEVDOOTH_E2E_NO_SANDBOX: "1"

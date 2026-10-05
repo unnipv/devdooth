@@ -1,0 +1,11 @@
+/devdooth
+/bin/
+/dist/
+*.test
+*.out
+.DS_Store
+node_modules/
+/tmp/
+
+# Playwright MCP session output
+.playwright-mcp/
