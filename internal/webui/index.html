@@ -471,32 +471,11 @@ devdooth lease --url http://192.168.1.10:8080 --token &lt;admin-token&gt; \
     <ul class="clean">
       <li>Chromium-family browsers only (CDP).</li>
       <li>One browser process per lease; no multi-context packing.</li>
-      <li>Single owner; no ACLs yet.</li>
+      <li>Single owner; no ACLs.</li>
       <li>Workers use installed browsers; Devdooth downloads none.</li>
-      <li>No enforced human takeover yet; headful lets a human act locally.</li>
-      <li>Remote uploads/downloads and filesystem semantics need per-case verification.</li>
+      <li>Human take-over is cooperative (pause/resume), not enforced ownership.</li>
+      <li>Remote uploads and downloads vary by browser; verify them per use case.</li>
     </ul>
-  </section>
-
-  <section id="status" class="wrap">
-    <h2>Status</h2>
-    <p class="sub">Pre-1.0, tested on macOS arm64 and Linux amd64 with real Chromium.</p>
-    <p><strong style="font-size:14px">Implemented</strong></p>
-    <p>
-      <span class="pill done">coordinator + worker + leases</span>
-      <span class="pill done">CDP relay &amp; Playwright</span>
-      <span class="pill done">worker-local profiles</span>
-      <span class="pill done">enrollment &amp; revocation</span>
-      <span class="pill done">Playwright MCP</span>
-      <span class="pill done">release binaries</span>
-      <span class="pill done">Raspberry Pi validated</span>
-      <span class="pill done">human take-over (pause/resume)</span>
-    </p>
-    <p style="margin-top:16px"><strong style="font-size:14px">Planned / not yet validated</strong></p>
-    <p>
-      <span class="pill next">Windows worker</span>
-      <span class="pill next">multi-owner clusters</span>
-    </p>
   </section>
 </main>
 

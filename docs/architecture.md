@@ -83,21 +83,18 @@ The relay copies WebSocket frames, preserving type and boundaries. It sets a
 32 MiB message cap and write deadlines. A slow consumer is disconnected; it is
 never buffered without limit.
 
-## Deliberate omissions
+## Non-goals
 
-- **No SDKs yet.** The HTTP API and CLI establish the contract first.
-- **Single owner, no ACLs.** Device records carry identity, so adding
-  `owner_id` later is not a rewrite.
-- **No enforced human takeover.** Pausing an opaque CDP stream does not pause an
-  in-flight agent. Headful sessions let a human act locally; coordinated
-  ownership is future work.
-- **No browser downloads.** Workers use installed browsers. This avoids
-  packaging and redistribution work before the core is proven.
+- **No SDKs.** The HTTP API and CLI are the contract; any language can call them.
+- **Single owner, no ACLs.** Device records carry identity, so ownership can be
+  layered on without a redesign.
+- **Cooperative take-over, not enforcement.** Pausing detaches the controller and
+  hands the window to a human; it does not stop a command already in flight.
+- **No bundled browsers.** Workers use the browsers already on the machine.
 
-## Verified
+## Test coverage
 
-`make smoke` and `go test ./e2e/` prove, on macOS/arm64 with Chrome 154 (and
-against Chrome on Linux x64 in CI):
+`make smoke` and `go test ./e2e/` exercise the whole path with a real browser:
 
 - a worker launches Chrome with a loopback-only debug port;
 - a normal Playwright client connects over CDP through the relay and drives a
@@ -106,9 +103,6 @@ against Chrome on Linux x64 in CI):
 - a second lease on a locked profile is rejected;
 - `devdooth mcp` hands the leased browser to upstream Playwright MCP.
 
-A Raspberry Pi 5 worker was validated end to end on real hardware (Linux arm64,
-Chromium 154): outbound enrollment, capability reporting, a Playwright client on
-another host, traffic proven to originate from the Pi, profile persistence,
-loopback-only debugging, worker-kill detection, and reconnect identity. An LLM
-agent completed a real Amazon search through the leased Pi browser. See
-[docs/validation.md](validation.md).
+Unit and integration tests cover enrollment and revocation, pause/resume,
+coordinator restart, capability scheduling, and the relay's frame bounds. The
+suite runs on macOS arm64 and on Linux x64 in CI.

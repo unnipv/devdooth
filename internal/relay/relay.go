@@ -15,10 +15,11 @@ import (
 )
 
 // MaxMessageBytes bounds a single CDP frame. CDP is small JSON; large values
-// usually mean a misbehaving peer.
-const MaxMessageBytes = 32 << 20 // 32 MiB
+// usually mean a misbehaving peer. A var so tests can lower it.
+var MaxMessageBytes int64 = 32 << 20 // 32 MiB
 
-const writeTimeout = 60 * time.Second
+// WriteTimeout bounds a single write. A var so tests can lower it.
+var WriteTimeout = 60 * time.Second
 
 // Pipe copies messages in both directions until either side closes or errors.
 // It always closes both connections before returning.
@@ -50,7 +51,7 @@ func copyMessages(dst, src *websocket.Conn, done chan<- error) {
 			done <- err
 			return
 		}
-		_ = dst.SetWriteDeadline(time.Now().Add(writeTimeout))
+		_ = dst.SetWriteDeadline(time.Now().Add(WriteTimeout))
 		if _, err := io.Copy(w, r); err != nil {
 			done <- err
 			return

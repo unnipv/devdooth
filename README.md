@@ -31,8 +31,7 @@ The Pi has no inbound ports; the browser uses the Pi's own residential network.*
 ## Demos
 
 Captured from real runs against a Raspberry Pi 5 worker (Chromium 154, headless)
-and a Mac worker (Chrome 154). See [docs/validation.md](docs/validation.md) for
-the full acceptance results.
+and a Mac worker (Chrome 154).
 
 | | |
 |---|---|
@@ -390,26 +389,6 @@ Run non-local deployments behind TLS (terminate `wss://` at a reverse proxy).
 `--public-url` accepts either an http(s) or ws(s) URL and is normalised to a
 WebSocket scheme for lease endpoints.
 
----
-
-## Status
-
-Milestone 0 and the first agent slice are implemented and tested on macOS/arm64
-with Chrome 154. The same end-to-end suite (relay, profile persistence, profile
-locking) also runs against Chrome on Linux x64 in CI.
-
-- [x] Coordinator, worker, leases, capability filtering, least-loaded scheduling
-- [x] Outbound control channel and per-attachment CDP tunnel
-- [x] Ordinary Playwright `connectOverCDP` through the relay
-- [x] Persistent worker-local profiles with exclusive locking
-- [x] Lease TTL, idle cleanup, worker-enforced teardown
-- [x] Playwright MCP integration via `devdooth mcp`
-- [x] SQLite metadata, single-use enrollment tokens, durable device identity, revocation
-- [x] Release automation, container image, install script
-- [x] Raspberry Pi 5 (Linux arm64) validated end to end — see [docs/validation.md](docs/validation.md)
-- [ ] Windows worker (builds, not yet run)
-- [ ] Multi-owner clusters
-
 ## Development
 
 ```bash
@@ -421,11 +400,11 @@ make smoke       # coordinator + worker + Playwright, end to end
 
 `scripts/browse.mjs` is a small Playwright CLI for driving a lease one action
 at a time (goto, click, fill, eval, screenshot, …). It is handy for manual
-checks and as the tool surface for an LLM agent loop. See
-[docs/validation.md](docs/validation.md) for real-hardware results.
+checks and as the tool surface for an LLM agent loop.
 
-See [docs/architecture.md](docs/architecture.md) for the reasoning behind the
-design.
+See [docs/architecture.md](docs/architecture.md) for the design,
+[docs/deployment.md](docs/deployment.md) for production setup, and
+[docs/threat-model.md](docs/threat-model.md) for the security model.
 
 ## Why Devdooth?
 
