@@ -118,7 +118,7 @@ SHA-256 checksums (macOS arm64/amd64, Linux amd64/arm64, Windows amd64).
 **Docker (coordinator):**
 
 ```bash
-docker run -p 8080:8080 -v devdooth:/data ghcr.io/unnipv/devdooth-coordinator:latest
+docker run -p 8080:8080 -v devdooth:/data ghcr.io/unnipv/devdooth:latest
 ```
 
 Images are published to GitHub Container Registry on release. If `docker pull`
