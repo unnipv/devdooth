@@ -278,6 +278,12 @@ MCP client config:
 Then ask the agent: *"Go to the site, find X, and report back."* The browser it
 drives is running on your Mac, using your profile's login state.
 
+### Let a coding agent set it up
+
+Point your coding agent at [AGENTS.md](AGENTS.md). It contains a copy-paste task
+that builds Devdooth, starts a coordinator and a worker, leases a browser, and
+verifies the page — no other instructions needed.
+
 ### Browser Use / Stagehand / anything CDP
 
 Point the library at the lease endpoint:
