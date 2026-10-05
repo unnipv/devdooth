@@ -182,10 +182,20 @@ func TestRevocationDropsActiveRelay(t *testing.T) {
 type testLease struct {
 	LeaseID  string `json:"lease_id"`
 	State    string `json:"state"`
+	Node     string `json:"node"`
 	Endpoint string `json:"endpoint"`
 }
 
 func acquireLease(t *testing.T, base, body string) testLease {
+	t.Helper()
+	out, code, raw := acquireLeaseRaw(t, base, body)
+	if code != http.StatusOK {
+		t.Fatalf("acquire status %d: %s", code, raw)
+	}
+	return out
+}
+
+func acquireLeaseRaw(t *testing.T, base, body string) (testLease, int, string) {
 	t.Helper()
 	req, _ := http.NewRequest(http.MethodPost, base+"/v1/leases", bytes.NewBufferString(body))
 	req.Header.Set("Authorization", "Bearer admin-token")
@@ -197,14 +207,9 @@ func acquireLease(t *testing.T, base, body string) testLease {
 	defer resp.Body.Close()
 	buf := new(bytes.Buffer)
 	_, _ = buf.ReadFrom(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("acquire status %d: %s", resp.StatusCode, buf.String())
-	}
 	var out testLease
-	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {
-		t.Fatalf("decode lease: %v", err)
-	}
-	return out
+	_ = json.Unmarshal(buf.Bytes(), &out)
+	return out, resp.StatusCode, buf.String()
 }
 
 // relayWorker is a fake worker that authenticates with a device token and
@@ -213,6 +218,7 @@ type relayWorker struct {
 	t     *testing.T
 	base  string
 	token string
+	name  string
 	conn  *websocket.Conn
 }
 
@@ -225,8 +231,12 @@ func (w *relayWorker) connect() {
 		w.t.Fatalf("worker dial: %v", err)
 	}
 	w.conn = conn
+	name := w.name
+	if name == "" {
+		name = "macbook"
+	}
 	if err := conn.WriteJSON(protocol.Hello{
-		Type: protocol.TypeHello, Name: "macbook", OS: "test", Arch: "test",
+		Type: protocol.TypeHello, Name: name, OS: "test", Arch: "test",
 		MaxSlots: 2, Browsers: []protocol.Browser{{Name: "chrome", Path: "/fake"}},
 		Generation: "gen-1",
 	}); err != nil {

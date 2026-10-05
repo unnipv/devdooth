@@ -24,7 +24,7 @@ type fakeWorker struct {
 	hello  protocol.Hello
 }
 
-func newFakeWorker(t *testing.T, serverURL string) *fakeWorker {
+func newFakeWorker(t *testing.T, serverURL string, opts ...func(*protocol.Hello)) *fakeWorker {
 	t.Helper()
 	wsBase := "ws" + strings.TrimPrefix(serverURL, "http")
 	hdr := http.Header{"Authorization": {"Bearer worker-token"}}
@@ -32,13 +32,17 @@ func newFakeWorker(t *testing.T, serverURL string) *fakeWorker {
 	if err != nil {
 		t.Fatalf("worker dial: %v", err)
 	}
-	w := &fakeWorker{t: t, conn: conn, wsBase: wsBase, hello: protocol.Hello{
+	hello := protocol.Hello{
 		Type: protocol.TypeHello, Name: "fake", OS: "test", Arch: "test",
 		Headful: true, MaxSlots: 2,
 		Browsers:   []protocol.Browser{{Name: "chrome", Path: "/fake/chrome"}},
 		Profiles:   []string{"shopping"},
 		Generation: "gen-1",
-	}}
+	}
+	for _, o := range opts {
+		o(&hello)
+	}
+	w := &fakeWorker{t: t, conn: conn, wsBase: wsBase, hello: hello}
 	if err := conn.WriteJSON(w.hello); err != nil {
 		t.Fatalf("worker hello: %v", err)
 	}
